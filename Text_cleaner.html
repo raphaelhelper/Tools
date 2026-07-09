@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Cleaner & Formatter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .punc, .spchar {
+            width: 70%;
+            box-sizing: border-box;
+            font-size: 28px;
+        }
+        label {
+            display: block;
+        }
+        textarea {
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            height: 50vh;
+        }
+         
+        button:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Text Cleaner & Formatter</h2>
+    
+    <textarea id="inputText" placeholder="Paste your text here...
+The app finds symbols and emojis automatically.
+​Note: Symbols inside words or numbers will not be deleted. (Examples: x-ray, o'clock, 3.14, 1,000,000)."></textarea>   
+        
+            <label for="punctInput">Detected Punctuations:</label>
+            <input class="punc" type="text" id="punctInput" placeholder="None detected">
+   
+            <label for="specialInput">Detected Special Chars:</label>
+            <input class="spchar" type="text" id="specialInput" placeholder="None detected">
+    <br>
+        <strong>Format Output:</strong><br>
+        <label>
+            <input type="radio" name="formatOption" id="formatSpace" value="space" checked> 
+            Space (One space between words)
+        </label>
+        <label>
+            <input type="radio" name="formatOption" id="formatLine" value="line"> 
+            Line (Each word on a new line)
+        </label>
+    
+    <button onclick="processText()">Delete & Format Text</button>
+
+<script>
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&');
+    }
+   
+    document.getElementById('inputText').addEventListener('input', function() {
+        const text = this.value;
+                
+        const punctMatches = text.match(/\p{P}/gu) || [];
+        
+        const specialMatches = text.match(/\p{S}/gu) || [];
+                
+        const uniquePunct = [...new Set(punctMatches)].join('');
+        const uniqueSpecial = [...new Set(specialMatches)].join('');
+                
+        document.getElementById('punctInput').value = uniquePunct;
+        document.getElementById('specialInput').value = uniqueSpecial;
+    });
+
+    function processText() {
+        let text = document.getElementById('inputText').value;
+        const punctuations = document.getElementById('punctInput').value;
+        const specialChars = document.getElementById('specialInput').value;        
+        const charsToRemove = punctuations + specialChars;       
+        
+        if (charsToRemove.length > 0) {
+    const regex = new RegExp('[' + escapeRegExp(charsToRemove) + ']', 'g');        text = text.replace(regex, (match, offset, string) => {
+        const prevChar = string[offset - 1];
+        const nextChar = string[offset + 1];
+        if (match === '-' || match === "'") {
+            const isWordChar = /[\p{L}\p{N}]/u;
+            if (prevChar && nextChar && isWordChar.test(prevChar) && isWordChar.test(nextChar)) {
+                return match; 
+            }
+        }
+        if (match === '.' || match === ',') {
+            const isNumber = /[\p{N}]/u;
+            if (prevChar && nextChar && isNumber.test(prevChar) && isNumber.test(nextChar)) {
+                return match;
+            }
+        }      
+        return ' '; 
+    });
+}
+        let words = text.trim().split(/\s+/).filter(word => word.length > 0);        
+        const formatSpace = document.getElementById('formatSpace').checked;            if (formatSpace) {
+            text = words.join(' ');
+        } else {
+            text = words.join('\n');
+        }    
+        document.getElementById('inputText').value = text;            document.getElementById('punctInput').value = '';
+        document.getElementById('specialInput').value = '';
+    }
+</script>
+</body>
+</html>
