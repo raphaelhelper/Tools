@@ -70,20 +70,14 @@
    }
    h1 {
     margin: 0;
-}
-   #mainpic {
-   
-   flex: 4;
+}   
    }  
       #profilepic {
        /* Replace the image name with your actual file name */
        background-image: url('Profile_picture.png');
        background-size: cover;
        background-position: center;
-       background-repeat: no-repeat;
-       
-       /* Your existing styles */
-       
+       background-repeat: no-repeat;       
    }
 
    #mainpic {
@@ -97,6 +91,12 @@
        flex: 4;
        width: 100%; /* Ensures it stretches across the screen */
    }  
+    /* Targets tablets and desktop screens */
+@media (min-width: 768px) {
+    #mainpic {
+        background-position: top; 
+    }
+}
 
     </style>
 </head>
