@@ -61,7 +61,7 @@
     padding-bottom: 5px;
    }
    #profilepic {
-   background-color: gray;
+
    height: 100px;
    width: 100px;
    margin-bottom: 5px;
@@ -72,8 +72,30 @@
     margin: 0;
 }
    #mainpic {
-   background-color: yellow;
+   
    flex: 4;
+   }  
+      #profilepic {
+       /* Replace the image name with your actual file name */
+       background-image: url('Profile_picture.png');
+       background-size: cover;
+       background-position: center;
+       background-repeat: no-repeat;
+       
+       /* Your existing styles */
+       
+   }
+
+   #mainpic {
+       /* Replace the image name with your actual file name */
+       background-image: url('Main_picture.png');
+       background-size: cover;
+       background-position: center;
+       background-repeat: no-repeat;
+       
+       /* Your existing styles */
+       flex: 4;
+       width: 100%; /* Ensures it stretches across the screen */
    }  
 
     </style>
