@@ -119,10 +119,10 @@
 
         /* Phong cách cho các mục menu trong sidebar */
         #sidebar a {
-        padding: 10px 10px;
+        padding: 5px 5px;
         text-decoration: none;
-        font-size: 18px;
-        color: white;
+        font-size: 16px;
+        color: #EAF6FF;
         display: block;
         transition: 0.2s;
         border-bottom: 1px solid #34495e; /* Đường gạch chân nhẹ */
@@ -132,7 +132,14 @@
         #sidebar a:hover {
         background-color: #34495e;
         }
+        /* Keep this to make flexbox work and align the image and text */
+        #sidebar a.menu-item {
+        display: flex;
+        align-items: center; /* Vertically centers the icon and raw text */
+        gap: 5px;           /* Adds a nice gap between the icon and text */
+        }
         
+
     /* Targets tablets and desktop screens */
 @media (min-width: 768px) {
     #mainpic {
@@ -162,9 +169,9 @@
  
      <div id="sidebar">
      <img src="icon.svg" alt="Icon">
-     <a href="index.html" class="menu-item">🏠 Home Page</a>
-     <a href="Text_cleaner.html" class="menu-item">🧹 Text Cleaner</a>
-
+     <a href="index.html" class="menu-item">     <img src="slime.svg" alt="Icon"> Home Page</a>
+     <a href="Text_cleaner.html" class="menu-item"><img src="slime.svg" alt="Icon">Text Cleaner </a>
+     <a href="Frequency_ranking.html" class="menu-item"><img src="slime.svg" alt="Icon">Sort Words by Frequency</a>
      </div>
      <div id="overlay" 
              onclick="closeMenu()">
