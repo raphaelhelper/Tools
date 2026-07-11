@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Word Rank Checker</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .header-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        a { 
+        display: inline-block;
+        padding-top: 10px;}
+        
+        @media (min-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .cell {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 200px;
+        }
+        /* New class to align heading and copy button */
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        /* Styling specific to the copy buttons */
+        .copy-btn {
+            margin-top: 0;
+            padding: 6px 12px;
+            font-size: 14px;
+            background-color: #28a745;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+        .status {
+            font-weight: bold;
+            color: #f39c12; /* Orange for loading */
+            font-size: 1.1em;
+        }
+        .status.loaded {
+            color: #5cb85c; /* Green for success */
+        }
+        .status.error {
+            color: #d9534f; /* Red for error */
+        }
+        h2 { margin: 0; font-size: 1.2rem; }
+        .result-list { line-height: 1.6; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <h2>Database Status</h2>
+        <span id="csvStatus" class="status">Loading database...</span>
+    </div>
+
+    <div class="header-section">
+        <h2>Paste Words to Check</h2>
+        <p style="margin-top:0; font-size: 0.9em; color:#666;">Separate words by spaces or new lines.</p>
+        <textarea id="inputText" placeholder="Paste your text here... example: a b c d e f"></textarea>
+        <button id="checkBtn" onclick="checkWords()" disabled>Check Words</button>
+    </div>
+
+    <div class="grid-container">
+        <div class="cell">
+            <div class="cell-header">
+                <h2>Found Words</h2>
+                <button class="copy-btn" onclick="copyText('foundOutput', this)">Copy</button>
+            </div>
+            <div id="foundOutput" class="result-list"></div>
+        </div>
+        <div class="cell">
+            <div class="cell-header">
+                <h2>Not Found Words</h2>
+                <button class="copy-btn" onclick="copyText('notFoundOutput', this)">Copy</button>
+            </div>
+            <div id="notFoundOutput" class="result-list"></div>
+        </div>
+    </div>
+<a href="index.html">🏠</a>
+    <script>
+        let dictionary = new Map(); 
+
+        // Automatically load the CSV file when the page opens
+        window.onload = function() {
+            // NOTE: Ensure your CSV file is named exactly 'database.csv'
+            fetch('database.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    parseCSV(text);
+                })
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                    const statusEl = document.getElementById('csvStatus');
+                    statusEl.textContent = "Can't load database";
+                    statusEl.className = 'status error';
+                });
+        };
+
+        function parseCSV(text) {
+            dictionary.clear();
+            const lines = text.split('\n');
+            
+            for (let i = 1; i < lines.length; i++) { 
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const columns = line.split(',');
+                if (columns.length >= 3) {
+                    const rank = parseInt(columns[0].trim(), 10);
+                    const pos = columns[1].trim();
+                    const word = columns[2].trim().toLowerCase();
+
+                    if (!dictionary.has(word)) {
+                        dictionary.set(word, []);
+                    }
+                    dictionary.get(word).push({ rank: rank, pos: pos, word: word });
+                }
+            }
+            
+            const statusEl = document.getElementById('csvStatus');
+            statusEl.textContent = `✓ Database loaded!`;
+            statusEl.className = 'status loaded';
+            document.getElementById('checkBtn').disabled = false;
+        }
+
+        function checkWords() {
+            const inputText = document.getElementById('inputText').value;
+            // 1. Get raw words array
+            const rawWords = inputText.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            
+            // 2. Remove duplicates by converting to a Set, then back to an array
+            const words = [...new Set(rawWords)];
+            
+            let found = [];
+            let notFound = new Set(); 
+        
+            words.forEach(w => {
+                if (!w) return; 
+                
+                if (dictionary.has(w)) {
+                    found.push(...dictionary.get(w));
+                } else {
+                    notFound.add(w);
+                }
+            });
+        
+            found.sort((a, b) => a.rank - b.rank);
+        
+            const foundHtml = found.map(item => 
+                `${item.word}(${item.pos}) rank ${item.rank}`
+            ).join('<br>');
+        
+            const notFoundHtml = Array.from(notFound).join(' ');
+        
+            document.getElementById('foundOutput').innerHTML = foundHtml || '<em>No matches found.</em>';
+            document.getElementById('notFoundOutput').innerHTML = notFoundHtml || '<em>All words found!</em>';
+        } 
+        
+        // New function to handle copying to clipboard
+        function copyText(elementId, btnElement) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            
+            // Prevent copying the placeholder em-tags
+            if (textToCopy === 'No matches found.' || textToCopy === 'All words found!') {
+                return; 
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+                alert("Failed to copy text. Your browser might not support this feature.");
+            });
+        }
+    </script>
+
+</body>
+</html>
