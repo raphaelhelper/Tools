@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Cleaner & Formatter</title>
     <style>
+    
+    
+    *{
+    background-color:black;
+    color: #E2E6EA;
+
+    }
+   input, button {
+border: 1px solid white;
+
+    }
+ button{
+  background-color: gray;  
+    }
         body {
             font-family: Arial, sans-serif;
             margin: 15px;
-            background-color: #f4f4f9;
-            color: #333;
+
+
         }
         .punc, .spchar {
             width: 70%;
@@ -31,16 +45,34 @@
         }
         a { display: block;
         padding-top: 10px;}
+        h2 {
+        margin: 0px;
+        }
+      #wrap {
+       position: relative; 
+        }
+    #p{
+       position: absolute;
+       right: 0px;
+       top: -40px; 
+        }
+        
     </style>
 </head>
 <body>
 
     <h2>Text Cleaner & Formatter</h2>
+<button id="tg1" onclick="toggle(this, 'i1'); toggle(this, 'ip1')">click here if you can't paste your text</button>
+<input id="i1" placeholder="paste your text here...">
+   <button id="ip1" onclick="importTxtFile('inputText')">Import a TXT File</button>
     
+    <div id="wrap">
     <textarea id="inputText" placeholder="Paste your text here...
 The app finds symbols and emojis automatically.
 ​Note: Symbols inside words or numbers will not be deleted. (Examples: x-ray, o'clock, 3.14, 1,000,000)."></textarea>   
         
+  <p id="p">0</p>      
+        </div>
             <label for="punctInput">Detected Punctuations:</label>
             <input class="punc" type="text" id="punctInput" placeholder="None detected">
    
@@ -86,10 +118,16 @@ The app finds symbols and emojis automatically.
         const charsToRemove = punctuations + specialChars;       
         
         if (charsToRemove.length > 0) {
-    const regex = new RegExp('[' + escapeRegExp(charsToRemove) + ']', 'g');        text = text.replace(regex, (match, offset, string) => {
+  const regex = new RegExp('[' + escapeRegExp(charsToRemove) + ']', 'g'); text = text.replace(regex, (match, offset, string) => {
         const prevChar = string[offset - 1];
         const nextChar = string[offset + 1];
-        if (match === '-' || match === "'") {
+
+if (
+    match === "-" ||
+    match === "‐" ||
+    match === "'" ||
+    match === "’"
+) {
             const isWordChar = /[\p{L}\p{N}]/u;
             if (prevChar && nextChar && isWordChar.test(prevChar) && isWordChar.test(nextChar)) {
                 return match; 
@@ -104,6 +142,15 @@ The app finds symbols and emojis automatically.
         return ' '; 
     });
 }
+text = text.replace(/[\u200D\uFE0E\uFE0F\u20E3]/gu, " ");
+
+const trimmedText = text.trim();
+// If trimmedText is empty, count is 0. Otherwise, split by spaces and get the length.
+const count = trimmedText ? trimmedText.split(/\s+/).length : 0;        
+document.getElementById('p').textContent = count;
+
+
+
         let words = text.trim().split(/\s+/).filter(word => word.length > 0);        
         const formatSpace = document.getElementById('formatSpace').checked;            if (formatSpace) {
             text = words.join(' ');
@@ -113,6 +160,81 @@ The app finds symbols and emojis automatically.
         document.getElementById('inputText').value = text;            document.getElementById('punctInput').value = '';
         document.getElementById('specialInput').value = '';
     }
+    
+function linkInputs(inputId, textareaId) {
+    const inputField = document.getElementById(inputId);
+    const textArea = document.getElementById(textareaId);
+
+    if (!inputField || !textArea) return;
+
+    inputField.addEventListener("input", () => {
+        textArea.value = inputField.value;
+
+        textArea.dispatchEvent(
+            new Event("input", {
+                bubbles: true
+               
+            })
+        );
+    });
+}
+    
+    // Call this function when the page loads
+    linkInputs("i1","inputText");
+
+    
+    
+    function toggle(button, id) {
+    const element = document.getElementById(id);
+    
+    const isHidden = element.style.display === "none";
+    
+    element.style.display = isHidden ? "" : "none";
+    button.textContent = isHidden ? "Hide" : "click here if you can't paste your text";
+    }
+    
+    toggle(document.getElementById("tg1"), "i1");
+    toggle(document.getElementById("tg1"), "ip1");
+
+
+    
+    function importTxtFile(targetId) {
+    const target = document.getElementById(targetId);
+    
+    if (!target) {
+    console.error(`Element "${targetId}" was not found.`);
+    return;
+    }
+    
+    const fileInput = document.createElement("input");
+    
+    fileInput.type = "file";
+    fileInput.accept = ".txt,text/plain";
+    
+    fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    try {
+    target.value = await file.text();
+    
+    target.dispatchEvent(
+    new Event("input", {
+    bubbles: true
+    })
+    );
+    } catch (error) {
+    console.error("Could not read the file:", error);
+    alert("Could not read this TXT file.");
+    }
+    });
+    
+    fileInput.click();
+    }
+    
+    
+    
 </script>
 </body>
-    </html>
+            </html>
