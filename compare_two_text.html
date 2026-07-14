@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compare Two Word Lists</title>
+    
+    <style>
+    body{
+ padding: 0px;
+ background-color: #000000;
+ color: white;   
+    }
+textarea{
+display: block;
+height: 40dvh;
+width: 100%;
+box-sizing: border-box;
+background-color: black;
+color: white;
+}
+#btn{ 
+padding: 5px;
+margin: 10px;
+margin-left: 0;
+}
+h2 {
+font-size: 20px;
+    margin: 0;
+    padding: 0;
+}
+.d {
+    position: relative;
+}
+
+.d p {
+    position: absolute;
+    top: -20px;
+    right: 0px;
+    margin: 0;
+    padding: 3px 6px;
+font-size: 10px;
+
+    color: white;
+
+    pointer-events: none;
+    z-index: 1;
+}
+
+
+
+
+
+    </style>
+</head>
+<body>
+
+ 
+ <h2>text 1</h2>
+ <button id="tg1" onclick="toggle(this, 'i1'); toggle(this, 'ip1')">click here if you can't paste your text</button>
+<input id="i1" placeholder="paste your text here...">
+    
+   <button id="ip1" onclick="importTxtFile('t1')">Import a TXT File</button>
+<div class="d">
+<textarea id="t1"></textarea>
+<p id="pt1"></p>
+</div>
+  <h2>text 2</h2>
+  <button id="tg2" onclick="toggle(this, 'i2'); toggle(this, 'ip2')">click here if you can't paste your text</button> 
+<input id="i2" placeholder="paste your text here...">
+    <button id="ip2" onclick="importTxtFile('t2')">Import a TXT File</button>
+<div class="d">
+<textarea  id="t2"></textarea>
+<p id="pt2" ></p>
+</div>
+
+<button id="btn" onclick="comparebtn()">compare</button>
+<h2>match</h2>  <button onclick="copyText(this, 'match')">Copy</button>
+
+<div class="d">
+<textarea id="match" readonly></textarea>
+<p id="pm"></p>
+</div>
+<h2>only in text 1</h2>  <button onclick="copyText(this, 'onlyt1')">Copy</button>
+
+<div class="d">
+<textarea id="onlyt1" readonly></textarea>
+<p id="po1"></p>
+</div>
+<h2> only in text 2</h2>   <button onclick="copyText(this, 'onlyt2')">Copy</button>
+
+<div class="d">
+<textarea id="onlyt2" readonly></textarea>
+<p id="po2"></p>
+</div>
+
+
+<a href="index.html">🏠</a>
+
+
+    
+    <script>    
+
+function removePunctuation(text) {
+    return text
+        .replace(
+            /(?<![\p{L}\p{M}\p{N}])['’\-‐]|['’\-‐](?![\p{L}\p{M}\p{N}])/gu,
+            " "
+        )
+        .replace(
+            /(?<!\p{N})[.,]|[.,](?!\p{N})/gu,
+            " "
+        )
+        .replace(
+            /[^\p{L}\p{M}\p{N}\s'’\-‐.,]/gu,
+            " "
+        )
+        .replace(/\s+/gu, " ")
+        .trim();
+}
+
+
+
+function compareTexts(text1, text2) {
+    // Clean and convert each text into an array of lowercase words
+    const words1 = removePunctuation(text1)
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    const words2 = removePunctuation(text2)
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    // Sets make word comparison faster
+    const set1 = new Set(words1);
+    const set2 = new Set(words2);
+
+    // Words appearing in both texts
+    const matchedWords = [...set1].filter(word => set2.has(word));
+
+    // Words appearing only in text 1
+    const onlyText1 = [...set1].filter(word => !set2.has(word));
+
+    // Words appearing only in text 2
+    const onlyText2 = [...set2].filter(word => !set1.has(word));
+
+    return {
+        matchedWords,
+        onlyText1,
+        onlyText2
+    };
+}
+// they're all array.
+
+
+function countWords(text) {
+    const cleanedText = removePunctuation(text);
+
+    if (!cleanedText) return 0;
+
+    return cleanedText
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
+}
+
+function addWordCounter(textareaId, paragraphId) {
+    const textarea = document.getElementById(textareaId);
+    const paragraph = document.getElementById(paragraphId);
+
+    function updateCounter() {
+        const total = countWords(textarea.value);
+        paragraph.textContent = `${total} words`;
+    }
+
+    textarea.addEventListener("input", updateCounter);
+
+    // Show the initial count
+    updateCounter();
+
+    // Return the function so it can be called manually
+    return updateCounter;
+}
+
+
+
+
+function comparebtn() {
+    const t1 = document.getElementById("t1").value;
+    const t2 = document.getElementById("t2").value;
+
+    const compare = compareTexts(t1, t2);
+
+    document.getElementById("match").value =
+        compare.matchedWords.join(" ");
+
+    document.getElementById("onlyt1").value =
+        compare.onlyText1.join(" ");
+
+    document.getElementById("onlyt2").value =
+        compare.onlyText2.join(" ");
+
+    updateMatchCount();
+    updateOnly1Count();
+    updateOnly2Count();
+}
+  
+
+ const updateT1Count = addWordCounter("t1", "pt1");
+ const updateT2Count = addWordCounter("t2", "pt2");
+ const updateMatchCount = addWordCounter("match", "pm");
+ const updateOnly1Count = addWordCounter("onlyt1", "po1");
+ const updateOnly2Count = addWordCounter("onlyt2", "po2");
+ 
+ 
+
+function copyText(btnElement, targetId) {
+    const textToCopy = document.getElementById(targetId).value;
+
+    navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+            // Change it to "Copied!"
+            btnElement.textContent = "Copied!";
+            
+            // Revert it to exactly "Copy" after 2 seconds
+            setTimeout(() => {
+                btnElement.textContent = "Copy"; 
+            }, 2000);
+        })
+        .catch(err => {
+            console.error("Failed to copy text: ", err);
+        });
+}
+
+function linkInputs(i, t) {
+    const inputField = document.getElementById(i);
+    const textArea = document.getElementById(t);
+
+    if (inputField && textArea) {
+        inputField.addEventListener("input", () => {
+            textArea.value = inputField.value;
+
+            textArea.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+        });
+    }
+}
+
+
+// Call this function when the page loads
+linkInputs("i1","t1");
+linkInputs("i2","t2");
+
+
+function toggle(button, id) {
+    const element = document.getElementById(id);
+    
+    const isHidden = element.style.display === "none";
+
+    element.style.display = isHidden ? "" : "none";
+    button.textContent = isHidden ? "Hide" : "click here if you can't paste your text";
+}
+
+toggle(document.getElementById("tg1"), "i1");
+toggle(document.getElementById("tg2"), "i2");
+toggle(document.getElementById("tg1"), "ip1");
+toggle(document.getElementById("tg2"), "ip2");
+
+function importTxtFile(targetId) {
+    const target = document.getElementById(targetId);
+
+    if (!target) {
+        console.error(`Element "${targetId}" was not found.`);
+        return;
+    }
+
+    const fileInput = document.createElement("input");
+
+    fileInput.type = "file";
+    fileInput.accept = ".txt,text/plain";
+
+    fileInput.addEventListener("change", async () => {
+        const file = fileInput.files[0];
+
+        if (!file) return;
+
+        try {
+            target.value = await file.text();
+
+            target.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+        } catch (error) {
+            console.error("Could not read the file:", error);
+            alert("Could not read this TXT file.");
+        }
+    });
+
+    fileInput.click();
+}
+
+
+    </script>
+</body>
+</html>
