@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raphael – English-Vietnamese AI Chat</title>
+    <style>
+body {
+    margin: 0;
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+
+#chat {
+display: flex;
+flex-direction: column;
+padding-bottom: 80px;
+overflow-wrap: break-word;
+word-break: break-word;
+
+}
+
+
+#wrap {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1000;
+
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    grid-template-rows: 40px;
+    align-items: center;
+    gap: 8px;
+
+    padding: 6px 8px;
+    box-sizing: border-box;
+
+    background-color: #212121;
+    border-radius: 28px;
+    transition: border-radius 0.2s, padding 0.2s;
+}
+
+#wrap * {
+    box-sizing: border-box;
+}
+
+/* Home and send buttons */
+
+.home-btn,
+.send-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+
+    display: grid;
+    place-items: center;
+
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.home-btn {
+    grid-column: 1;
+    grid-row: 1;
+    background-color: transparent;
+}
+
+.home-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: #c4c7c5;
+}
+
+.send-btn {
+    grid-column: 3;
+    grid-row: 1;
+
+    background-color: #ffffff;
+    color: #111111;
+
+    font-size: 24px;
+    line-height: 1;
+}
+
+/* Textarea */
+
+#t {
+    grid-column: 2;
+    grid-row: 1;
+
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    max-height: 50dvh;
+
+    margin: 0;
+    padding: 8px 4px;
+
+    background: transparent;
+    color: #e3e3e3;
+    caret-color: white;
+
+    border: none;
+    outline: none;
+    resize: none;
+    overflow-y: hidden;
+
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 24px;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+#t::placeholder {
+    color: #8e918f;
+}
+
+/* =========================
+   MULTILINE LAYOUT
+========================= */
+
+#wrap.multiline {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    grid-template-rows: auto 40px;
+    align-items: end;
+    column-gap: 8px;
+    row-gap: 4px;
+
+    padding: 8px 12px;
+    border-radius: 24px;
+}
+
+/* Text becomes almost full width */
+
+#wrap.multiline #t {
+    grid-column: 1 / -1;
+    grid-row: 1;
+
+    width: 100%;
+    margin: 0;
+    padding: 8px 4px;
+}
+
+/* Buttons always remain at the bottom */
+
+#wrap.multiline .home-btn {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+#wrap.multiline .send-btn {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.home-btn:active,
+.send-btn:active {
+    transform: scale(0.94);
+}
+
+
+
+
+
+.you {
+padding: 10px;
+    background-color: #222222;
+    border-radius: 10px;
+ align-self: flex-end;
+ max-width: 80%; 
+margin-bottom: 10px;
+
+    white-space: break-spaces;
+
+}
+
+.markdown > :first-child {
+    margin-top: 0;
+}
+
+.markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.markdown pre {
+    overflow-x: auto;
+}
+
+.markdown a {
+    color: #8ab4f8;
+}
+
+.thinking {
+    color: #aaa;
+    font-style: italic;
+    padding: 10px 0;
+    animation: thinkingPulse 1s infinite alternate;
+}
+
+@keyframes thinkingPulse {
+    from { opacity: 0.4; }
+    to   { opacity: 1; }
+}
+
+
+
+    </style>
+</head>
+<body>
+
+<div id="chat">
+</div>
+
+
+<div id="wrap">
+    <a href="index.html" class="home-btn" aria-label="Home">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 11L12 3L21 11V21H15V15H9V21H3Z"></path>
+        </svg>
+    </a>
+
+    <textarea
+        id="t"
+        rows="1"
+        placeholder="Message"
+        aria-label="Message"
+    ></textarea>
+
+    <button
+        type="button"
+        class="send-btn"
+        onclick="send()"
+        aria-label="Send message"
+    >
+        ↑
+    </button>
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
+<script>
+   const FUNCTION_URL =
+    "https://pevwdrbyoeqjwfqqwipf.supabase.co/functions/v1/gemini-chat";
+    const history = [];
+
+
+async function callGemini(contents) {
+    const response = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ contents })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        const message =
+            data.error?.message ||
+            data.error ||
+            `Request failed (${response.status})`;
+
+        throw new Error(message);
+    }
+
+    return data;
+}
+
+
+function renderMarkdown(text) {
+    return DOMPurify.sanitize(marked.parse(text));
+}
+
+
+const wrap = document.getElementById("wrap");
+const messageInput = document.getElementById("t");
+
+function getSingleLineHeight() {
+    const style = getComputedStyle(messageInput);
+
+    return Math.ceil(
+        parseFloat(style.lineHeight) +
+        parseFloat(style.paddingTop) +
+        parseFloat(style.paddingBottom)
+    );
+}
+
+function resizeInput() {
+    const singleLineHeight = getSingleLineHeight();
+
+    /*
+       Temporarily measure the text using the small layout.
+       This prevents the layout from jumping backward and forward.
+    */
+    wrap.classList.remove("multiline");
+    messageInput.style.height = singleLineHeight + "px";
+
+    const needsMultiline =
+        messageInput.scrollHeight > singleLineHeight + 1;
+
+    wrap.classList.toggle("multiline", needsMultiline);
+
+    /*
+       Measure again after changing the textarea width,
+       then grow it until it reaches 50% of the screen.
+    */
+    messageInput.style.height = singleLineHeight + "px";
+
+    const requiredHeight = messageInput.scrollHeight;
+    const maxHeight = Math.max(
+        singleLineHeight,
+        Math.floor(window.innerHeight * 0.5)
+    );
+
+    messageInput.style.height =
+        Math.min(requiredHeight, maxHeight) + "px";
+
+    messageInput.style.overflowY =
+        requiredHeight > maxHeight ? "auto" : "hidden";
+}
+
+messageInput.addEventListener("input", resizeInput);
+window.addEventListener("resize", resizeInput);
+
+resizeInput();
+
+
+
+function isVietnamese(text) {
+    const normalizedText = text.normalize("NFC");
+
+    return /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/iu
+        .test(normalizedText);
+}
+
+
+let isSending = false;
+
+async function send() {
+    if (isSending) return;
+
+    const text = messageInput.value;
+    if (!text.trim()) return;
+    
+const vietnameseFirst = isVietnamese(text);
+
+    isSending = true;
+
+    try {
+
+
+    const chat = document.getElementById("chat");
+    
+    // 1. Display User Message
+    const youMessage = document.createElement('div');
+    youMessage.className = 'you';
+    youMessage.textContent = text; 
+    chat.appendChild(youMessage);
+
+    // Update conversation history
+    history.push({ role: "user", parts: [{ text: text }] });
+messageInput.value = "";
+
+
+resizeInput();
+
+// Show temporary waiting message
+const thinkingMessage = document.createElement("div");
+thinkingMessage.className = "bot thinking";
+thinkingMessage.textContent = "Thinking...";
+chat.appendChild(thinkingMessage);
+
+window.scrollTo(0, document.body.scrollHeight);
+
+
+
+
+    try {
+        // 2. First API Call: Get the AI's normal response
+ 
+ let data1 = await callGemini(history);
+ 
+    
+        let reply1 = data1.candidates?.[0]?.content?.parts?.[0]?.text || "Error occurred.";          
+        
+        // Save the bot's reply to history so it remembers the conversation
+        history.push({ role: "model", parts: [{ text: reply1 }] });
+
+
+// 10 items in history = 5 messages from you + 5 replies from the bot
+if (history.length >= 12) { 
+    try {
+        // 1. Extract the text from the objects so the AI can actually read it
+        let conversationText = history.map(msg => 
+            `${msg.role}: ${msg.parts[0].text}`
+        ).join("\n");
+
+        // 2. Format the summary prompt exactly how the API expects it
+        let summaryPrompt = [
+            {
+                role: "user",
+                parts: [{ text: "Summarize this conversation briefly so we don't lose context:\n" + conversationText }]
+            }
+        ];
+
+        // 3. Make the API call to get the summary
+  let summaryData = await callGemini(summaryPrompt);
+   
+                   let summaryReply = summaryData.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating summary.";          
+        
+        // 4. Clear the old history safely
+        // Using length = 0 is safer than history = [] if you declared it with 'const'
+        history.length = 0; 
+
+        // 5. Save the summary back into history.
+        // We push a "user" message and a "model" message to keep the alternating pattern intact!
+        history.push({ 
+            role: "user", 
+            parts: [{ text: "Here is a summary of our chat so far:\n" + summaryReply }] 
+        });
+        history.push({ 
+            role: "model", 
+            parts: [{ text: "Understood! I will keep this context in mind. What's next?" }] 
+        });
+
+    } catch (error) {
+        console.error("Summary failed:", error);
+    }
+}
+
+
+
+        // 3. Second API Call: Ask Gemini to translate its own response
+        // Using backticks (`) for multiline strings
+        const prompt = `Translate the following text sentence by sentence into this exact format:
+en: [English sentence]
+vi: [Vietnamese sentence]
+
+Here is the text to translate:
+${reply1}`;
+  
+  let data2 = await callGemini([
+    {
+        role: "user",
+        parts: [{ text: prompt }]
+    }
+]);
+  
+  
+    
+        let reply2 = data2.candidates?.[0]?.content?.parts?.[0]?.text || "";          
+  
+        // 4. Parse the translation and create interactive DOM elements
+        const botMessage = document.createElement('div');
+        botMessage.className = 'bot';
+
+        const regex =
+        /^\s*(?:[-+*]\s+)?(?:\*\*)?(en|vi)\s*:(?:\*\*)?\s*(.*)$/gim;
+        let currentEnText = "";
+
+        for (const match of reply2.matchAll(regex)) {
+            const lang = match[1].toLowerCase();
+            const sentence = match[2];
+
+            if (lang === 'en') {
+                // Store the English text temporarily
+                currentEnText = sentence;
+            } else if (lang === 'vi') {
+                // When we hit a 'vi' line, we have a complete pair.
+                // Create a container for the sentence pair
+                const sentenceWrapper = document.createElement('div');
+                sentenceWrapper.style.marginBottom = "8px";
+                sentenceWrapper.style.cursor = "pointer"; // Shows the user it is clickable
+
+                // Create the English paragraph
+
+  const enPara = document.createElement('div');
+  enPara.className = "markdown";
+  enPara.innerHTML = renderMarkdown(currentEnText);                
+                enPara.style.margin = "0";
+
+                // Create the Vietnamese paragraph (Hidden by default)
+const viPara = document.createElement('div');
+viPara.className = "markdown";
+viPara.innerHTML = renderMarkdown(sentence);
+                viPara.style.margin = "0";
+
+// Choose the language order from the user's input
+const firstPara = vietnameseFirst ? viPara : enPara;
+const secondPara = vietnameseFirst ? enPara : viPara;
+
+// Main language
+firstPara.style.display = "block";
+firstPara.style.color = "inherit";
+
+// Translation
+secondPara.style.display = "none";
+secondPara.style.color = "#00ffff";
+
+// Tap to show or hide the translation
+sentenceWrapper.addEventListener("click", () => {
+    secondPara.style.display =
+        secondPara.style.display === "none" ? "block" : "none";
+});
+
+sentenceWrapper.appendChild(firstPara);
+sentenceWrapper.appendChild(secondPara);
+
+
+                botMessage.appendChild(sentenceWrapper);
+
+                // Clear temporary English text
+                currentEnText = "";
+            }
+        }
+
+        // Fallback: If Gemini failed to follow the en/vi format, just show plain text
+        if (botMessage.childNodes.length === 0) {
+   botMessage.innerHTML = renderMarkdown(reply1);
+        }
+
+thinkingMessage.replaceWith(botMessage);
+
+    window.scrollTo(0, document.body.scrollHeight);
+
+    } catch (e) {
+        console.error(e);
+        const errorMessage = document.createElement("div");
+        errorMessage.className = "bot";
+        errorMessage.style.color = "red";
+        errorMessage.textContent = "Error: Could not connect to API.";
+thinkingMessage.replaceWith(errorMessage);
+    }
+
+
+} finally {
+        isSending = false;
+    }
+}
+
+</script>
+
+</body>
+</html>
