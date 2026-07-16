@@ -182,10 +182,41 @@
             document.getElementById('checkBtn').disabled = false;
         }
 
+function removePunctuation(text) {
+    return text
+        // Normalize similar characters
+        .replace(/[’]/g, "'")
+        .replace(/[‐‑‒–—]/g, "-")
+
+        // Keep apostrophes and hyphens only inside words
+        .replace(
+            /(?<![\p{L}\p{M}\p{N}])['-]|['-](?![\p{L}\p{M}\p{N}])/gu,
+            " "
+        )
+
+        // Keep dots and commas only between numbers
+        .replace(
+            /(?<!\p{N})[.,]|[.,](?!\p{N})/gu,
+            " "
+        )
+
+        // Remove remaining unwanted characters
+        .replace(
+            /[^\p{L}\p{M}\p{N}\s'.,-]/gu,
+            " "
+        )
+
+        .replace(/\s+/gu, " ")
+        .trim();
+}
+
+
         function checkWords() {
             const inputText = document.getElementById('inputText').value;
+            
+      const cleanText = removePunctuation(inputText);      
             // 1. Get raw words array
-            const rawWords = inputText.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            const rawWords = cleanText.toLowerCase().split(/\s+/);
             
             // 2. Remove duplicates by converting to a Set, then back to an array
             const words = [...new Set(rawWords)];
