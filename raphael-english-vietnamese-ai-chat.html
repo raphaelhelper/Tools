@@ -354,200 +354,299 @@ async function send() {
     if (isSending) return;
 
     const text = messageInput.value;
+
     if (!text.trim()) return;
-    
-const vietnameseFirst = isVietnamese(text);
+
+    const vietnameseFirst = isVietnamese(text);
 
     isSending = true;
 
     try {
+        const chat = document.getElementById("chat");
 
+        // 1. Display the user's message
+        const youMessage = document.createElement("div");
+        youMessage.className = "you";
+        youMessage.textContent = text;
+        chat.appendChild(youMessage);
 
-    const chat = document.getElementById("chat");
-    
-    // 1. Display User Message
-    const youMessage = document.createElement('div');
-    youMessage.className = 'you';
-    youMessage.textContent = text; 
-    chat.appendChild(youMessage);
+        // Save the user's message to conversation history
+        history.push({
+            role: "user",
+            parts: [{ text: text }]
+        });
 
-    // Update conversation history
-    history.push({ role: "user", parts: [{ text: text }] });
-messageInput.value = "";
+        messageInput.value = "";
+        resizeInput();
 
+        // Show temporary waiting message
+        const thinkingMessage = document.createElement("div");
+        thinkingMessage.className = "bot thinking";
+        thinkingMessage.textContent = "Thinking...";
+        chat.appendChild(thinkingMessage);
 
-resizeInput();
+        window.scrollTo(0, document.body.scrollHeight);
 
-// Show temporary waiting message
-const thinkingMessage = document.createElement("div");
-thinkingMessage.className = "bot thinking";
-thinkingMessage.textContent = "Thinking...";
-chat.appendChild(thinkingMessage);
+        try {
+            // 2. First API call: Get Gemini's normal response
+            const data1 = await callGemini(history);
 
-window.scrollTo(0, document.body.scrollHeight);
+            const reply1 =
+                data1.candidates?.[0]?.content?.parts?.[0]?.text ||
+                "Error occurred.";
 
+            // Save Gemini's original response to history
+            history.push({
+                role: "model",
+                parts: [{ text: reply1 }]
+            });
 
+            // 12 history items = approximately 6 user messages and 6 replies
+            if (history.length >= 12) {
+                try {
+                    // Convert conversation history into readable text
+                    const conversationText = history
+                        .map(message => {
+                            return `${message.role}: ${message.parts[0].text}`;
+                        })
+                        .join("\n");
 
+                    // Create the summary request
+                    const summaryPrompt = [
+                        {
+                            role: "user",
+                            parts: [
+                                {
+                                    text:
+                                        "Summarize this conversation briefly so we don't lose context:\n" +
+                                        conversationText
+                                }
+                            ]
+                        }
+                    ];
 
-    try {
-        // 2. First API Call: Get the AI's normal response
- 
- let data1 = await callGemini(history);
- 
-    
-        let reply1 = data1.candidates?.[0]?.content?.parts?.[0]?.text || "Error occurred.";          
-        
-        // Save the bot's reply to history so it remembers the conversation
-        history.push({ role: "model", parts: [{ text: reply1 }] });
+                    // Ask Gemini to summarize the conversation
+                    const summaryData = await callGemini(summaryPrompt);
 
+                    const summaryReply =
+                        summaryData.candidates?.[0]?.content?.parts?.[0]?.text ||
+                        "Error generating summary.";
 
-// 10 items in history = 5 messages from you + 5 replies from the bot
-if (history.length >= 12) { 
-    try {
-        // 1. Extract the text from the objects so the AI can actually read it
-        let conversationText = history.map(msg => 
-            `${msg.role}: ${msg.parts[0].text}`
-        ).join("\n");
+                    // Remove the old history
+                    history.length = 0;
 
-        // 2. Format the summary prompt exactly how the API expects it
-        let summaryPrompt = [
-            {
-                role: "user",
-                parts: [{ text: "Summarize this conversation briefly so we don't lose context:\n" + conversationText }]
+                    // Store the summary as the new conversation context
+                    history.push({
+                        role: "user",
+                        parts: [
+                            {
+                                text:
+                                    "Here is a summary of our chat so far:\n" +
+                                    summaryReply
+                            }
+                        ]
+                    });
+
+                    history.push({
+                        role: "model",
+                        parts: [
+                            {
+                                text:
+                                    "Understood! I will keep this context in mind. What's next?"
+                            }
+                        ]
+                    });
+                } catch (error) {
+                    console.error("Summary failed:", error);
+                }
             }
-        ];
 
-        // 3. Make the API call to get the summary
-  let summaryData = await callGemini(summaryPrompt);
-   
-                   let summaryReply = summaryData.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating summary.";          
-        
-        // 4. Clear the old history safely
-        // Using length = 0 is safer than history = [] if you declared it with 'const'
-        history.length = 0; 
+            // 3. Second API call: Translate Gemini's response
+            const prompt = `Translate the following text sentence by sentence into this exact format:
 
-        // 5. Save the summary back into history.
-        // We push a "user" message and a "model" message to keep the alternating pattern intact!
-        history.push({ 
-            role: "user", 
-            parts: [{ text: "Here is a summary of our chat so far:\n" + summaryReply }] 
-        });
-        history.push({ 
-            role: "model", 
-            parts: [{ text: "Understood! I will keep this context in mind. What's next?" }] 
-        });
-
-    } catch (error) {
-        console.error("Summary failed:", error);
-    }
-}
-
-
-
-        // 3. Second API Call: Ask Gemini to translate its own response
-        // Using backticks (`) for multiline strings
-        const prompt = `Translate the following text sentence by sentence into this exact format:
 en: [English sentence]
 vi: [Vietnamese sentence]
 
+Do not add an introduction, conclusion, explanation, code fence, or any other text.
+
 Here is the text to translate:
 ${reply1}`;
-  
-  let data2 = await callGemini([
-    {
-        role: "user",
-        parts: [{ text: prompt }]
-    }
-]);
-  
-  
-    
-        let reply2 = data2.candidates?.[0]?.content?.parts?.[0]?.text || "";          
-  
-        // 4. Parse the translation and create interactive DOM elements
-        const botMessage = document.createElement('div');
-        botMessage.className = 'bot';
 
-        const regex =
-        /^\s*(?:[-+*]\s+)?(?:\*\*)?(en|vi)\s*:(?:\*\*)?\s*(.*)$/gim;
-        let currentEnText = "";
+            const data2 = await callGemini([
+                {
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }
+            ]);
 
-        for (const match of reply2.matchAll(regex)) {
-            const lang = match[1].toLowerCase();
-            const sentence = match[2];
+            const reply2 =
+                data2.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-            if (lang === 'en') {
-                // Store the English text temporarily
-                currentEnText = sentence;
-            } else if (lang === 'vi') {
-                // When we hit a 'vi' line, we have a complete pair.
-                // Create a container for the sentence pair
-                const sentenceWrapper = document.createElement('div');
-                sentenceWrapper.style.marginBottom = "8px";
-                sentenceWrapper.style.cursor = "pointer"; // Shows the user it is clickable
+            // 4. Create the final bot message
+            const botMessage = document.createElement("div");
+            botMessage.className = "bot";
 
-                // Create the English paragraph
+            // Accept:
+            // en: Hello
+            // vi: Xin chào
+            //
+            // Also accepts:
+            // - en: Hello
+            // **vi:** Xin chào
+            const regex =
+                /^\s*(?:[-+*]\s+)?(?:\*\*)?(en|vi)\s*:(?:\*\*)?\s*(.*)$/gim;
 
-  const enPara = document.createElement('div');
-  enPara.className = "markdown";
-  enPara.innerHTML = renderMarkdown(currentEnText);                
-                enPara.style.margin = "0";
+            let currentEnText = "";
+            let completePairCount = 0;
+            let translationFailed = false;
 
-                // Create the Vietnamese paragraph (Hidden by default)
-const viPara = document.createElement('div');
-viPara.className = "markdown";
-viPara.innerHTML = renderMarkdown(sentence);
-                viPara.style.margin = "0";
+            for (const match of reply2.matchAll(regex)) {
+                const lang = match[1].toLowerCase();
+                const sentence = match[2].trim();
 
-// Choose the language order from the user's input
-const firstPara = vietnameseFirst ? viPara : enPara;
-const secondPara = vietnameseFirst ? enPara : viPara;
+                // An empty en: or vi: line is invalid
+                if (!sentence) {
+                    translationFailed = true;
+                    continue;
+                }
 
-// Main language
-firstPara.style.display = "block";
-firstPara.style.color = "inherit";
+                if (lang === "en") {
+                    // The previous English sentence did not receive a
+                    // Vietnamese translation
+                    if (currentEnText) {
+                        translationFailed = true;
+                    }
 
-// Translation
-secondPara.style.display = "none";
-secondPara.style.color = "#00ffff";
+                    currentEnText = sentence;
+                    continue;
+                }
 
-// Tap to show or hide the translation
-sentenceWrapper.addEventListener("click", () => {
-    secondPara.style.display =
-        secondPara.style.display === "none" ? "block" : "none";
-});
+                if (lang === "vi") {
+                    // Vietnamese appeared without an English sentence first
+                    if (!currentEnText) {
+                        translationFailed = true;
+                        continue;
+                    }
 
-sentenceWrapper.appendChild(firstPara);
-sentenceWrapper.appendChild(secondPara);
+                    // Create one English/Vietnamese sentence pair
+                    const sentenceWrapper = document.createElement("div");
+                    sentenceWrapper.style.marginBottom = "8px";
+                    sentenceWrapper.style.cursor = "pointer";
 
+                    // English sentence
+                    const enPara = document.createElement("div");
+                    enPara.className = "markdown";
+                    enPara.innerHTML = renderMarkdown(currentEnText);
+                    enPara.style.margin = "0";
 
-                botMessage.appendChild(sentenceWrapper);
+                    // Vietnamese sentence
+                    const viPara = document.createElement("div");
+                    viPara.className = "markdown";
+                    viPara.innerHTML = renderMarkdown(sentence);
+                    viPara.style.margin = "0";
 
-                // Clear temporary English text
-                currentEnText = "";
+                    // Put Vietnamese first when the user writes Vietnamese
+                    const firstPara = vietnameseFirst ? viPara : enPara;
+                    const secondPara = vietnameseFirst ? enPara : viPara;
+
+                    // Show the main language
+                    firstPara.style.display = "block";
+                    firstPara.style.color = "inherit";
+
+                    // Hide the translation at first
+                    secondPara.style.display = "none";
+                    secondPara.style.color = "#00ffff";
+
+                    // Tap the sentence to show or hide its translation
+                    sentenceWrapper.addEventListener("click", () => {
+                        secondPara.style.display =
+                            secondPara.style.display === "none"
+                                ? "block"
+                                : "none";
+                    });
+
+                    sentenceWrapper.appendChild(firstPara);
+                    sentenceWrapper.appendChild(secondPara);
+                    botMessage.appendChild(sentenceWrapper);
+
+                    completePairCount++;
+                    currentEnText = "";
+                }
             }
+
+            // An English sentence remained without Vietnamese
+            if (currentEnText) {
+                translationFailed = true;
+            }
+
+            // Gemini completely failed to produce any valid pairs
+            if (completePairCount === 0) {
+                translationFailed = true;
+            }
+
+            /*
+             * Translation fallback:
+             *
+             * Show Gemini's original answer normally.
+             * When the user taps it, show the translation error message.
+             */
+            if (translationFailed) {
+                // Remove any incomplete translation pairs
+                botMessage.innerHTML = "";
+                botMessage.style.cursor = "pointer";
+
+                // Show Gemini's original response
+                const originalReply = document.createElement("div");
+                originalReply.className = "markdown";
+                originalReply.innerHTML = renderMarkdown(reply1);
+
+                // Create the hidden error notice
+                const translationError = document.createElement("div");
+                translationError.className = "translation-error";
+                translationError.textContent =
+                    "Translation error. Please reload the page if it lasts too long.";
+
+                translationError.style.display = "none";
+                translationError.style.marginTop = "10px";
+                translationError.style.padding = "8px 10px";
+                translationError.style.borderRadius = "8px";
+                translationError.style.color = "#ffb4ab";
+                translationError.style.backgroundColor =
+                    "rgba(255, 80, 80, 0.12)";
+
+                botMessage.appendChild(originalReply);
+                botMessage.appendChild(translationError);
+
+                // Tap the original answer to show or hide the error notice
+                botMessage.addEventListener("click", event => {
+                    // Allow links inside markdown to work normally
+                    if (event.target.closest("a")) {
+                        return;
+                    }
+
+                    translationError.style.display =
+                        translationError.style.display === "none"
+                            ? "block"
+                            : "none";
+                });
+            }
+
+            // Replace "Thinking..." with the final message
+            thinkingMessage.replaceWith(botMessage);
+
+            window.scrollTo(0, document.body.scrollHeight);
+        } catch (error) {
+            console.error(error);
+
+            const errorMessage = document.createElement("div");
+            errorMessage.className = "bot";
+            errorMessage.style.color = "red";
+            errorMessage.textContent =
+                "Error: Could not connect to API.";
+
+            thinkingMessage.replaceWith(errorMessage);
         }
-
-        // Fallback: If Gemini failed to follow the en/vi format, just show plain text
-        if (botMessage.childNodes.length === 0) {
-   botMessage.innerHTML = renderMarkdown(reply1);
-        }
-
-thinkingMessage.replaceWith(botMessage);
-
-    window.scrollTo(0, document.body.scrollHeight);
-
-    } catch (e) {
-        console.error(e);
-        const errorMessage = document.createElement("div");
-        errorMessage.className = "bot";
-        errorMessage.style.color = "red";
-        errorMessage.textContent = "Error: Could not connect to API.";
-thinkingMessage.replaceWith(errorMessage);
-    }
-
-
-} finally {
+    } finally {
         isSending = false;
     }
 }
