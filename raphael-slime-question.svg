@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Surprised blue slime with a question mark</title>
+  <desc id="desc">A glossy pale-blue slime squints in surprise beneath a floating question mark on a deep-blue gradient background.</desc>
+
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0.18" y2="1">
+      <stop offset="0" stop-color="#073d74"/>
+      <stop offset="0.52" stop-color="#075587"/>
+      <stop offset="1" stop-color="#25a7c8"/>
+    </linearGradient>
+
+    <radialGradient id="aquaGlow" cx="78%" cy="54%" r="46%">
+      <stop offset="0" stop-color="#2dd7eb" stop-opacity="0.64"/>
+      <stop offset="0.52" stop-color="#1fb4d7" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#0a5f91" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="slimeBody" x1="0.15" y1="0.05" x2="0.82" y2="0.95">
+      <stop offset="0" stop-color="#d9f8ff"/>
+      <stop offset="0.45" stop-color="#bfe8f4"/>
+      <stop offset="1" stop-color="#a9d9ea"/>
+    </linearGradient>
+
+    <linearGradient id="rimGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1fdff" stop-opacity="0.96"/>
+      <stop offset="0.58" stop-color="#d5f5fb" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#8fcee3" stop-opacity="0.76"/>
+    </linearGradient>
+
+    <linearGradient id="mouth" x1="0.25" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#8dbdd5"/>
+      <stop offset="1" stop-color="#76accb"/>
+    </linearGradient>
+
+    <linearGradient id="question" x1="0.08" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#e6fbff"/>
+      <stop offset="0.5" stop-color="#b8e8f4"/>
+      <stop offset="1" stop-color="#8bc6df"/>
+    </linearGradient>
+
+    <linearGradient id="questionShade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8dc3dc" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#4f98bf" stop-opacity="0.76"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="blur"/>
+      <feOffset dy="13" result="offset"/>
+      <feColorMatrix in="offset" type="matrix" values="0 0 0 0 0.015 0 0 0 0 0.18 0 0 0 0 0.32 0 0 0 .52 0" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="symbolGlow" x="-40%" y="-30%" width="180%" height="175%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.35 0 0 0 0 0.9 0 0 0 0 1 0 0 0 .58 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <clipPath id="bodyClip">
+      <path d="M149 746C136 646 171 559 252 489C350 404 472 360 598 359C741 357 865 419 949 519C1022 607 1054 726 1039 826C1023 935 941 989 810 1011C651 1038 390 1029 257 979C176 949 139 861 149 746Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Soft ground glow -->
+  <ellipse cx="600" cy="1035" rx="465" ry="78" fill="#174c68" opacity="0.24"/>
+
+  <!-- Glossy vector question mark -->
+  <g filter="url(#symbolGlow)" transform="rotate(15 932 285)">
+    <path
+      d="M866 102C905 60 963 42 1016 53C1085 68 1126 119 1121 180C1117 237 1081 274 1040 308C1003 339 981 362 978 404L974 447L887 447L889 395C893 331 921 293 968 254C1003 225 1023 204 1025 177C1027 153 1012 138 988 134C961 130 938 142 918 169L895 201L828 153C837 135 849 118 866 102Z"
+      fill="url(#question)"
+      stroke="#3b7da4"
+      stroke-width="10"
+      stroke-linejoin="round"/>
+    <path
+      d="M914 119C946 88 991 81 1024 99C1050 113 1063 137 1057 166C1051 194 1035 215 1002 245C970 274 945 303 932 339C930 305 946 267 979 235C1019 196 1030 168 1014 145C997 121 954 122 923 151Z"
+      fill="url(#questionShade)"/>
+    <path
+      d="M874 126C899 91 934 72 969 69C945 82 929 100 913 128C903 145 890 150 876 143C869 139 868 133 874 126Z"
+      fill="#fff"
+      opacity="0.9"/>
+    <path d="M934 356C935 326 950 304 977 281" fill="none" stroke="#f1fdff" stroke-width="11" stroke-linecap="round" opacity="0.65"/>
+    <circle cx="929" cy="519" r="51" fill="url(#question)" stroke="#3b7da4" stroke-width="10"/>
+    <ellipse cx="911" cy="500" rx="17" ry="22" fill="#fff" opacity="0.9"/>
+  </g>
+
+  <!-- Small floating bubble -->
+  <g filter="url(#symbolGlow)">
+    <circle cx="887" cy="467" r="35" fill="#a7d9eb" stroke="#4a89ad" stroke-width="7" opacity="0.95"/>
+    <ellipse cx="875" cy="452" rx="10" ry="14" fill="#fff" opacity="0.88"/>
+  </g>
+
+  <!-- Left cat-like fin/ear, behind the body -->
+  <path
+    d="M157 707C126 638 123 522 160 463C167 451 178 448 190 456C222 478 253 515 274 559L219 637C193 671 174 695 157 707Z"
+    fill="url(#slimeBody)"
+    stroke="#376f8d"
+    stroke-width="11"
+    stroke-linejoin="round"
+    filter="url(#softShadow)"/>
+  <path
+    d="M163 568C157 527 162 495 173 481C195 497 219 523 236 551C208 551 183 557 163 568Z"
+    fill="#83b7d2"
+    opacity="0.8"/>
+  <path d="M151 644C146 610 147 583 152 558" fill="none" stroke="#eefcff" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Main slime -->
+  <g filter="url(#softShadow)">
+    <path
+      d="M149 746C136 646 171 559 252 489C350 404 472 360 598 359C741 357 865 419 949 519C1022 607 1054 726 1039 826C1023 935 941 989 810 1011C651 1038 390 1029 257 979C176 949 139 861 149 746Z"
+      fill="url(#slimeBody)"
+      stroke="#376f8d"
+      stroke-width="12"
+      stroke-linejoin="round"/>
+
+    <!-- Pale rim along the bottom and left -->
+    <path
+      d="M174 706C155 814 192 917 286 955C415 1007 664 1007 811 983C910 967 978 931 1010 872C993 954 915 993 804 1012C650 1038 392 1029 262 981C177 950 142 856 149 759C151 741 160 721 174 706Z"
+      fill="url(#rimGlow)"
+      opacity="0.72"/>
+
+    <!-- Open surprised mouth -->
+    <path
+      d="M222 796C244 758 296 742 349 753C387 761 422 744 426 710C431 675 464 658 508 659C579 659 651 684 700 730C728 756 742 790 779 791C803 792 817 775 821 753C826 724 853 707 885 715C945 729 965 783 940 827C928 849 906 865 880 872C915 893 913 925 881 947C828 984 325 982 244 934C195 905 190 839 222 796Z"
+      fill="url(#mouth)"/>
+
+    <!-- Mouth soft depth -->
+    <path
+      d="M245 891C328 939 787 947 881 913C895 908 905 901 914 892C922 913 909 934 880 951C816 986 331 980 247 938C219 924 206 902 206 881C218 884 231 888 245 891Z"
+      fill="#6da4c4"
+      opacity="0.52"/>
+
+    <!-- Squinting eyes -->
+    <g fill="none" stroke="#386981" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M275 538C341 538 398 579 421 644" stroke-width="9"/>
+      <path d="M427 600C434 616 437 631 437 647" stroke-width="8"/>
+      <path d="M446 617C453 630 456 641 457 653" stroke-width="7"/>
+      <path d="M525 650C553 611 617 581 688 567C735 558 775 557 810 563" stroke-width="9"/>
+      <path d="M522 657C540 665 561 669 581 668" stroke-width="8"/>
+    </g>
+
+    <!-- Body highlights -->
+    <path
+      d="M376 451C421 414 510 390 572 405C611 414 619 443 589 466C547 499 462 516 401 500C364 491 350 473 376 451Z"
+      fill="#fff"
+      opacity="0.91"/>
+    <path
+      d="M632 410C648 407 666 422 674 442C681 462 675 477 659 477C642 476 626 459 620 440C614 423 618 412 632 410Z"
+      fill="#fff"
+      opacity="0.88"/>
+    <ellipse cx="784" cy="742" rx="35" ry="21" fill="#fff" opacity="0.92" transform="rotate(7 784 742)"/>
+    <ellipse cx="880" cy="780" rx="16" ry="20" fill="#d9f7ff" opacity="0.72"/>
+    <circle cx="913" cy="798" r="10" fill="#d9f7ff" opacity="0.65"/>
+    <ellipse cx="211" cy="792" rx="15" ry="23" fill="#72a9c9" opacity="0.76"/>
+    <circle cx="232" cy="831" r="11" fill="#72a9c9" opacity="0.75"/>
+
+    <!-- Subtle translucent shine over the body -->
+    <path
+      d="M181 686C203 585 291 489 403 432C325 494 270 574 250 659C225 767 247 866 324 935C224 895 172 801 181 686Z"
+      fill="#f4feff"
+      opacity="0.16"
+      clip-path="url(#bodyClip)"/>
+  </g>
+</svg>
